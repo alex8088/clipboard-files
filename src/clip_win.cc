@@ -29,10 +29,11 @@ Local<Array> get_file_names(Isolate *isolate)
 			{
 				memset(szFilePathName, 0, MAX_PATH + 1);
 				DragQueryFile(hDrop, nIndex, szFilePathName, MAX_PATH); // get file name
-				fileNames->Set(nIndex, String::NewFromUtf8(isolate, GBK2Utf8(szFilePathName)));
+				fileNames->Set(nIndex, String::NewFromUtf8(isolate, GBK2Utf8(szFilePathName), NewStringType::kNormal).ToLocalChecked());
 			}
 		}
 		CloseClipboard(); // close clipboard
+		
 	}
 	return fileNames;
 }

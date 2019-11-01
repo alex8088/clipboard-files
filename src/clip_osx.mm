@@ -17,7 +17,7 @@ Local<Array> get_file_names(Isolate *isolate){
     NSString *pathString = [tmpItem stringForType:@"public.file-url"];
     const char* str = [pathString UTF8String];
     if(str){
-      fileNames->Set(count,String::NewFromUtf8(isolate,str));
+      fileNames->Set(count,String::NewFromUtf8(isolate,str,NewStringType::kNormal).ToLocalChecked());
       count++;
     }
   }
