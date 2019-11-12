@@ -12,12 +12,13 @@ Local<Array> get_file_names(Isolate *isolate){
     }
   }
   Local<Array> fileNames = Array::New(isolate, count);
+  Local<Context> context = isolate->GetCurrentContext();
   count =0;
   for(NSPasteboardItem *tmpItem in tempArray){ 
     NSString *pathString = [tmpItem stringForType:@"public.file-url"];
     const char* str = [pathString UTF8String];
     if(str){
-      fileNames->Set(count,String::NewFromUtf8(isolate,str,NewStringType::kNormal).ToLocalChecked());
+      fileNames->Set(context,count,String::NewFromUtf8(isolate,str,NewStringType::kNormal).ToLocalChecked());
       count++;
     }
   }

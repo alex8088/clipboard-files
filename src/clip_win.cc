@@ -17,6 +17,7 @@ char *GBK2Utf8(const char *strGBK)
 Local<Array> get_file_names(Isolate *isolate)
 {
 	Local<Array> fileNames = Array::New(isolate, 0);
+	Local<Context> context = isolate->GetCurrentContext();
 	if (OpenClipboard(NULL)) // open clipboard
 	{
 		HDROP hDrop = HDROP(::GetClipboardData(CF_HDROP)); // get the file path hwnd of clipboard
@@ -29,11 +30,10 @@ Local<Array> get_file_names(Isolate *isolate)
 			{
 				memset(szFilePathName, 0, MAX_PATH + 1);
 				DragQueryFile(hDrop, nIndex, szFilePathName, MAX_PATH); // get file name
-				fileNames->Set(nIndex, String::NewFromUtf8(isolate, GBK2Utf8(szFilePathName), NewStringType::kNormal).ToLocalChecked());
+				fileNames->Set(context, nIndex, String::NewFromUtf8(isolate, GBK2Utf8(szFilePathName), NewStringType::kNormal).ToLocalChecked());
 			}
 		}
-		CloseClipboard(); // close clipboard
-		
+		CloseClipboard(); // close clipboard	
 	}
 	return fileNames;
 }

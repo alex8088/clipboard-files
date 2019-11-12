@@ -1,6 +1,7 @@
 #include <windows.h>
 #include <node.h>
 
+using v8::Context;
 using v8::Array;
 using v8::FunctionCallbackInfo;
 using v8::Isolate;
