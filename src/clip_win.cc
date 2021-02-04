@@ -38,55 +38,59 @@ Local<Array> get_file_names(Isolate *isolate)
 	return fileNames;
 }
 
+std::wstring stringToWstring(const std::string& str)
+{
+    int nLen = MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, NULL, 0);
+    if (nLen == 0) 
+        return std::wstring(L"");
+
+    wchar_t* wide = new wchar_t[nLen];
+    if (!wide) 
+        return std::wstring(L"");
+
+    MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, wide, nLen);
+    std::wstring wstr(wide);
+    delete[] wide;
+    wide = NULL;
+    return wstr;
+}
+
 void write_file_names(Isolate *isolate, Local<Array> fileNames)
 {
 	Local<Context> context = isolate->GetCurrentContext();
-	TCHAR * sFiles = NULL;
-	int nLen = 0;
-	for (size_t i = 0; i < fileNames->Length(); i++) {
-		MaybeLocal<Value> maybeIndex = fileNames->Get(context, i);
-		Local<Value> index = maybeIndex.ToLocalChecked();
 
-		String::Utf8Value path(isolate, index);
+    std::vector<wstring> files;
+    for (size_t i = 0; i < fileNames->Length(); i++) {
+        MaybeLocal<Value> maybeIndex = fileNames->Get(context, i);
+        Local<Value> index = maybeIndex.ToLocalChecked();
+        String::Utf8Value path(isolate, index);
+        std::string pathStr(*path);
+        files.push_back(stringToWstring(pathStr));
+    }
 
-		int size = nLen;
-		nLen += path.length() + 1;
-		sFiles = (TCHAR*)realloc(sFiles, nLen * sizeof(TCHAR));
-#if UNICODE
-		std::string narrow(*path);
-
-		std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-		std::wstring wide = converter.from_bytes(narrow);
-
-		std::wcscpy(sFiles + size, wide.c_str);
-#else
-		std::strcpy(sFiles + size, *path);
-#endif
+    size_t bytes = sizeof(DROPFILES);
+    for (size_t i = 0; i < files.size(); ++i)
+        bytes += (files[i].length() + 1) * sizeof(wchar_t);
+    bytes += sizeof(wchar_t);
+    HANDLE hdata = ::GlobalAlloc(GMEM_MOVEABLE, bytes);
+    if (!hdata)
+       return;
+    DROPFILES* drop_files = static_cast<DROPFILES*>(::GlobalLock(hdata));
+    drop_files->pFiles = sizeof(DROPFILES);
+    drop_files->fWide = TRUE;
+    BYTE* data = reinterpret_cast<BYTE*>(drop_files) + sizeof(DROPFILES);
+    // Copy the strings stored in 'files' with proper NULL separation.
+    wchar_t* data_pos = reinterpret_cast<wchar_t*>(data);
+    for (size_t i = 0; i < files.size(); ++i) {
+        size_t offset = files[i].length() + 1;
+        memcpy(data_pos, files[i].c_str(), offset * sizeof(wchar_t));
+        data_pos += offset;
 	}
-	DROPFILES dobj = { 20, { 0, 0 }, 0, 1 };
-#if UNICODE
-	int nGblLen = sizeof(dobj) + nLen + 5;
-#else
-    int nGblLen = sizeof(dobj) + nLen * 2 + 5;
-#endif
-	HGLOBAL hGbl = GlobalAlloc(GMEM_ZEROINIT | GMEM_MOVEABLE | GMEM_DDESHARE, nGblLen);
-	TCHAR * sData = (char*)::GlobalLock(hGbl);
-	memcpy(sData, &dobj, 20);
-	TCHAR * sWStr = sData + 20;
-#if UNICODE
-	for (int i = 0; i < nLen; i += 1) {
-		sWStr[i] = sFiles[i];
-	}
-#else
-	for (int i = 0; i < nLen * 2; i += 2) {
-		sWStr[i] = sFiles[i / 2];
-	}
-#endif
-	::GlobalUnlock(hGbl);
+    data_pos[0] = L'\0';  // Double NULL termination after the last string.
+    ::GlobalUnlock(hdata);
     if (OpenClipboard(NULL)) {
-		EmptyClipboard();
-		SetClipboardData(CF_HDROP, hGbl);
-		CloseClipboard();
+        EmptyClipboard();
+        SetClipboardData(CF_HDROP, hdata);
+        CloseClipboard();
 	}
-	free(sFiles);
 }

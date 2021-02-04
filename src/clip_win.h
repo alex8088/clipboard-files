@@ -1,7 +1,11 @@
 #include <windows.h>
 #include <node.h>
 #include <shlobj.h>
+#include <vector>
+#include <string>
+#include <iostream>
 
+using namespace std;
 using v8::Context;
 using v8::Array;
 using v8::FunctionCallbackInfo;
