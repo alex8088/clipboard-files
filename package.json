@@ -1,7 +1,7 @@
 {
 	"name": "clipboard-files",
-	"version": "0.0.9",
-	"description": "A nodejs addon, read file path from clipboard, support win32 and mac osx",
+	"version": "1.0.0",
+	"description": "A nodejs addon, read or write file path for clipboard, support win32 and mac osx",
 	"main": "./lib/index.js",
 	"directories": {
 		"lib": "lib",

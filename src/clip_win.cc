@@ -37,3 +37,56 @@ Local<Array> get_file_names(Isolate *isolate)
 	}
 	return fileNames;
 }
+
+void write_file_names(Isolate *isolate, Local<Array> fileNames)
+{
+	Local<Context> context = isolate->GetCurrentContext();
+	TCHAR * sFiles = NULL;
+	int nLen = 0;
+	for (size_t i = 0; i < fileNames->Length(); i++) {
+		MaybeLocal<Value> maybeIndex = fileNames->Get(context, i);
+		Local<Value> index = maybeIndex.ToLocalChecked();
+
+		String::Utf8Value path(isolate, index);
+
+		int size = nLen;
+		nLen += path.length() + 1;
+		sFiles = (TCHAR*)realloc(sFiles, nLen * sizeof(TCHAR));
+#if UNICODE
+		std::string narrow(*path);
+
+		std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+		std::wstring wide = converter.from_bytes(narrow);
+
+		std::wcscpy(sFiles + size, wide.c_str);
+#else
+		std::strcpy(sFiles + size, *path);
+#endif
+	}
+	DROPFILES dobj = { 20, { 0, 0 }, 0, 1 };
+#if UNICODE
+	int nGblLen = sizeof(dobj) + nLen + 5;
+#else
+    int nGblLen = sizeof(dobj) + nLen * 2 + 5;
+#endif
+	HGLOBAL hGbl = GlobalAlloc(GMEM_ZEROINIT | GMEM_MOVEABLE | GMEM_DDESHARE, nGblLen);
+	TCHAR * sData = (char*)::GlobalLock(hGbl);
+	memcpy(sData, &dobj, 20);
+	TCHAR * sWStr = sData + 20;
+#if UNICODE
+	for (int i = 0; i < nLen; i += 1) {
+		sWStr[i] = sFiles[i];
+	}
+#else
+	for (int i = 0; i < nLen * 2; i += 2) {
+		sWStr[i] = sFiles[i / 2];
+	}
+#endif
+	::GlobalUnlock(hGbl);
+    if (OpenClipboard(NULL)) {
+		EmptyClipboard();
+		SetClipboardData(CF_HDROP, hGbl);
+		CloseClipboard();
+	}
+	free(sFiles);
+}
