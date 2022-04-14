@@ -1,8 +1,9 @@
 {
 	"name": "clipboard-files",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"description": "A nodejs addon, read or write file path for clipboard, support win32 and mac osx",
 	"main": "./lib/index.js",
+	"types": "./lib/index.d.ts",
 	"directories": {
 		"lib": "lib",
 		"test": "test"
@@ -32,7 +33,7 @@
 	"license": "MIT",
 	"gypfile": true,
 	"dependencies": {
-		"nan": "^2.13.2",
-		"node-pre-gyp": "^0.12.0"
+		"@mapbox/node-pre-gyp": "^1.0.9",
+		"nan": "^2.13.2"
 	}
 }
