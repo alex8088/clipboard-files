@@ -34,6 +34,6 @@
 	"gypfile": true,
 	"dependencies": {
 		"@mapbox/node-pre-gyp": "^1.0.9",
-		"nan": "^2.13.2"
+		"nan": "^2.17.0"
 	}
 }
