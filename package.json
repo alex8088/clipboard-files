@@ -4,10 +4,11 @@
 	"description": "A nodejs addon, read or write file path for clipboard, support win32 and mac osx",
 	"main": "./lib/index.js",
 	"types": "./lib/index.d.ts",
-	"directories": {
-		"lib": "lib",
-		"test": "test"
-	},
+	"files": [
+		"lib",
+		"src",
+		"binding.gyp"	
+	],
 	"binary": {
 		"module_name": "binding",
 		"module_path": "./lib/binding/{node_abi}-{platform}-{arch}/",

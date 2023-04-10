@@ -1,6 +1,0 @@
-/build
-/node_modules
-/npm-debug.log
-/lib/binding
-yarn.lock
-npm-debug.log
