@@ -1,10 +1,14 @@
 {
 	"targets": [{
 		"target_name": "binding",
+		"cflags!": [ "-fno-exceptions" ], # 忽略编译时异常
+      	"cflags_cc!": [ "-fno-exceptions" ],  # 忽略编译时异常
 		"sources": [
 			"src/main.cc"
 		],
-		"include_dirs": ["<!(node -e \"require('nan')\")"],
+		"include_dirs": [
+			 "<!@(node -p \"require('node-addon-api').include\")"
+			],
         "conditions": [
 			['OS=="mac"',
 			{
@@ -38,7 +42,8 @@
                 "src/clip_win.cc"
             ],
             'defines': [
-				'__WIN32__'
+				'__WIN32__',
+				'NAPI_DISABLE_CPP_EXCEPTIONS' # 禁用 N-API 中的 C++ 异常处理机制, N-API 函数在发生错误时会返回一个错误码，而不是抛出异常
 			]
             }
 			],
@@ -46,13 +51,5 @@
 				{}
 			]
 		]
-	}, {
-		"target_name": "action_after_build",
-		"type": "none",
-		"dependencies": ["<(module_name)"],
-		"copies": [{
-			"files": [ "<(PRODUCT_DIR)/<(module_name).node" ],
-			"destination": "<(module_path)"
-		}]
 	}]
 }
