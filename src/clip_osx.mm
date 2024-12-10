@@ -4,15 +4,19 @@ Local<Array> get_file_names(Isolate *isolate){
   Local<Array> fileNames = Array::New(isolate);
   Local<Context> context = isolate->GetCurrentContext();
 
-  NSPasteboard* pasteboard = [NSPasteboard generalPasteboard];  
+  NSPasteboard* pasteboard = [NSPasteboard generalPasteboard];
   NSArray* tempArray = [pasteboard pasteboardItems];
   int count = 0;
-  for(NSPasteboardItem *tmpItem in tempArray){ 
+  for(NSPasteboardItem *tmpItem in tempArray){
     NSString *pathString = [tmpItem stringForType:@"public.file-url"];
-    const char* str = [pathString UTF8String];
-    if(str){
-      fileNames->Set(context, count, String::NewFromUtf8(isolate, str, NewStringType::kNormal).ToLocalChecked());
-      count++;
+    if (pathString && [pathString isKindOfClass:[NSString class]]) {
+      NSURL *url = [NSURL URLWithString:pathString];
+      NSString *realPathString = [url path];
+      if (realPathString) {
+        const char* str = [[NSString stringWithFormat:@"file://%@", realPathString] UTF8String];
+        fileNames->Set(context, count, String::NewFromUtf8(isolate, str, NewStringType::kNormal).ToLocalChecked());
+        count++;
+      }
     }
   }
   return fileNames;
