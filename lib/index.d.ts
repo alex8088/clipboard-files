@@ -8,7 +8,6 @@ declare module "clipboard-files" {
   /**
    * Write file paths to system clipboard
    * @param files Array of file paths to write to clipboard
-   * @throws {TypeError} If files is not an array
    */
   export function writeFiles(filePaths: string[]): void;
 }

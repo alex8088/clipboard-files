@@ -33,8 +33,6 @@ Writes an array of file paths to the clipboard.
 
 - `files`: Array of strings, each representing a file path
 
-Throws `TypeError` if the input is not an array.
-
 ## Platform Support
 
 - Windows
