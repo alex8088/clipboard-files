@@ -1,6 +1,6 @@
 {
   "name": "clipboard-files",
-  "version": "2.0.0",
+  "version": "3.0.0-beta.0",
   "description": "A nodejs addon, read or write file paths for clipboard, supports win32 and mac osx",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
