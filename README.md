@@ -8,22 +8,38 @@ A nodejs addon, read or write file paths for clipboard, supports win32 and mac o
 npm i clipboard-files
 ```
 
-## Building for Electron
-
-```bash
-npm i clipboard-files --build-from-source --runtime=electron --target=24.0.0 --target_arch=ia32 --dist-url=https://electronjs.org/headers
-```
-
 ## Usage
 
 ```js
-const clipboard = require('clipboard-files')
+const clipboard = require("clipboard-files");
 
-// for mac
-clipboard.writeFiles(['/Users/Alex/Download/helloWorld.js'])
+// Read file paths from clipboard
+const files = clipboard.readFiles();
+console.log("Files in clipboard:", files);
 
-// for win32
-clipboard.writeFiles(['C:\\Users\\Alex\\Documents\\helloWorld.js'])
-
-let fileNames = clipboard.readFiles()
+// Write file paths to clipboard
+clipboard.writeFiles(["/path/to/file1.txt", "/path/to/file2.txt"]);
 ```
+
+## API
+
+### readFiles()
+
+Returns an array of strings containing file paths from the clipboard.
+
+### writeFiles(files: string[])
+
+Writes an array of file paths to the clipboard.
+
+- `files`: Array of strings, each representing a file path
+
+Throws `TypeError` if the input is not an array.
+
+## Platform Support
+
+- Windows
+- macOS
+
+## License
+
+MIT

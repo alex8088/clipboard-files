@@ -1,58 +1,49 @@
 {
-	"targets": [{
-		"target_name": "binding",
-		"sources": [
-			"src/main.cc"
-		],
-		"include_dirs": ["<!(node -e \"require('nan')\")"],
+    "targets": [{
+        "target_name": "binding",
+        "cflags!": ["-fno-exceptions"],
+        "cflags_cc!": ["-fno-exceptions"],
+        "sources": [
+            "src/main.cc"
+        ],
+        "include_dirs": [
+            "<!@(node -p \"require('node-addon-api').include\")"
+        ],
+        "defines": [
+            "NAPI_DISABLE_CPP_EXCEPTIONS"
+        ],
         "conditions": [
-			['OS=="mac"',
-			{
-            "sources":[
-                "src/clip_osx.h",
-                "src/clip_osx.mm"
-            ],
-			'defines': [
-				'__MACOSX_CORE__',
-                '__MAC__'
-			],
-			'link_settings': {
-				'libraries': [
-                    '-framework Cocoa',
-					'-framework CoreFoundation',
-				]
-			},
-			'xcode_settings': {
-				'GCC_ENABLE_CPP_EXCEPTIONS': 'YES',
-				'OTHER_CFLAGS': [
-					'-ObjC++',
-					'-std=c++17'
-				]
-			    }
-			}
-			],
-			['OS=="win"',
-			{
-            "sources":[
-                "src/clip_win.h",
-                "src/clip_win.cc"
-            ],
-            'defines': [
-				'__WIN32__'
-			]
-            }
-			],
-			['OS=="linux"',
-				{}
-			]
-		]
-	}, {
-		"target_name": "action_after_build",
-		"type": "none",
-		"dependencies": ["<(module_name)"],
-		"copies": [{
-			"files": [ "<(PRODUCT_DIR)/<(module_name).node" ],
-			"destination": "<(module_path)"
-		}]
-	}]
+            ['OS=="mac"', {
+                'defines': [
+                    '__MACOSX__'
+                ],
+                "sources": [
+                    "src/clip_osx.mm"
+                ],
+                "xcode_settings": {
+                    "GCC_ENABLE_CPP_EXCEPTIONS": "YES",
+                    "CLANG_CXX_LIBRARY": "libc++",
+                    "MACOSX_DEPLOYMENT_TARGET": "10.9"
+                },
+                "link_settings": {
+                    "libraries": [
+                        "-framework Cocoa"
+                    ]
+                }
+            }],
+            ['OS=="win"', {
+                'defines': [
+				    '__WIN32__'
+			    ],
+                "sources": [
+                    "src/clip_win.cc"
+                ],
+                "msvs_settings": {
+                    "VCCLCompilerTool": {
+                        "ExceptionHandling": 1
+                    }
+                }
+            }]
+        ]
+    }]
 }

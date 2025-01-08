@@ -1,39 +1,32 @@
 {
-	"name": "clipboard-files",
-	"version": "2.0.0",
-	"description": "A nodejs addon, read or write file paths for clipboard, supports win32 and mac osx",
-	"main": "./lib/index.js",
-	"types": "./lib/index.d.ts",
-	"files": [
-		"lib",
-		"src",
-		"binding.gyp"	
-	],
-	"binary": {
-		"module_name": "binding",
-		"module_path": "./lib/binding/{node_abi}-{platform}-{arch}/",
-		"package_name": "{node_abi}-{platform}-{arch}.tar.gz",
-		"host": "https://github.com/alex8088/clipboard-files/releases/download/",
-		"remote_path": "v{version}"
-	},
-	"keywords": [
-		"clipboard",
-		"files",
-		"electron"
-	],
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/alex8088/clipboard-files.git"
-	},
-	"scripts": {
-		"test": "node ./test",
-		"install": "node-pre-gyp install --fallback-to-build"
-	},
-	"author": "alex.wei",
-	"license": "MIT",
-	"gypfile": true,
-	"dependencies": {
-		"@mapbox/node-pre-gyp": "^1.0.10",
-		"nan": "^2.17.0"
-	}
+  "name": "clipboard-files",
+  "version": "2.0.0",
+  "description": "A nodejs addon, read or write file paths for clipboard, supports win32 and mac osx",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "files": [
+    "lib",
+    "src",
+    "binding.gyp"
+  ],
+  "author": "alex.wei",
+  "license": "MIT",
+  "keywords": [
+    "clipboard",
+    "files",
+    "electron"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alex8088/clipboard-files.git"
+  },
+  "scripts": {
+    "install": "node-gyp rebuild",
+    "build": "node-gyp rebuild",
+    "test": "node test/index.js"
+  },
+  "dependencies": {
+    "bindings": "^1.5.0",
+    "node-addon-api": "^8.3.0"
+  }
 }

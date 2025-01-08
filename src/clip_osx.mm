@@ -1,40 +1,50 @@
+#import <Cocoa/Cocoa.h>
 #include "clip_osx.h"
 
-Local<Array> get_file_names(Isolate *isolate){
-  Local<Array> fileNames = Array::New(isolate);
-  Local<Context> context = isolate->GetCurrentContext();
-
-  NSPasteboard* pasteboard = [NSPasteboard generalPasteboard];  
-  NSArray* tempArray = [pasteboard pasteboardItems];
-  int count = 0;
-  for(NSPasteboardItem *tmpItem in tempArray){ 
-    NSString *pathString = [tmpItem stringForType:@"public.file-url"];
-    const char* str = [pathString UTF8String];
-    if(str){
-      fileNames->Set(context, count, String::NewFromUtf8(isolate, str, NewStringType::kNormal).ToLocalChecked());
-      count++;
+Napi::Array GetFileNames(Napi::Env env) {
+    Napi::Array result = Napi::Array::New(env);
+    uint32_t index = 0;
+    
+    @autoreleasepool {
+        NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
+        NSArray *classes = @[[NSURL class]];
+        NSDictionary *options = @{NSPasteboardURLReadingFileURLsOnlyKey: @YES};
+        
+        NSArray *urls = [pasteboard readObjectsForClasses:classes options:options];
+        if (urls) {
+            for (NSURL *url in urls) {
+                if ([url isFileURL]) {
+                    NSString *path = [url path];
+                    result.Set(index++, Napi::String::New(env, [path UTF8String]));
+                }
+            }
+        }
     }
-  }
-  return fileNames;
+    
+    return result;
 }
 
-void write_file_names(Isolate *isolate, Local<Array> fileNames)
-{
-  Local<Context> context = isolate->GetCurrentContext();
-
-  std::vector<string> files;
-  for (size_t i = 0; i < fileNames->Length(); i++) {
-    MaybeLocal<Value> maybeIndex = fileNames->Get(context, i);
-    Local<Value> index = maybeIndex.ToLocalChecked();
-    String::Utf8Value path(isolate, index);
-    std::string pathStr(*path);
-    files.push_back(pathStr);
-  }
-
-  NSMutableArray* fileList = [NSMutableArray arrayWithCapacity:files.size()];
-  NSPasteboard* pasteboard = [NSPasteboard generalPasteboard];
-  for (unsigned int i = 0; i < files.size(); i++)
-    [fileList addObject:[NSString stringWithUTF8String:files[i].c_str()]];
-  [pasteboard declareTypes:[NSArray arrayWithObject:NSFilenamesPboardType] owner:nil];
-  [pasteboard setPropertyList:fileList forType:NSFilenamesPboardType];
+void WriteFileNames(Napi::Env env, Napi::Array files) {
+    @autoreleasepool {
+        NSMutableArray *urls = [NSMutableArray array];
+        uint32_t length = files.Length();
+        
+        for (uint32_t i = 0; i < length; i++) {
+            Napi::Value value = files[i];
+            if (value.IsString()) {
+                std::string utf8Path = value.As<Napi::String>();
+                NSString *path = [NSString stringWithUTF8String:utf8Path.c_str()];
+                NSURL *url = [NSURL fileURLWithPath:path];
+                if (url) {
+                    [urls addObject:url];
+                }
+            }
+        }
+        
+        if ([urls count] > 0) {
+            NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
+            [pasteboard clearContents];
+            [pasteboard writeObjects:urls];
+        }
+    }
 }

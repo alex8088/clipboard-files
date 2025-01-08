@@ -1,44 +1,30 @@
-﻿#include <node.h>
+#include <napi.h>
 #ifdef __WIN32__
 #include "clip_win.h"
 #elif __APPLE__
 #include "clip_osx.h"
 #endif
 
-namespace clipboard
-{
-	using v8::Context;
-	using v8::Array;
-	using v8::FunctionCallbackInfo;
-	using v8::Isolate;
-	using v8::Local;
-	using v8::MaybeLocal;
-	using v8::Object;
-	using v8::String;
-	using v8::NewStringType;
-	using v8::Value;
-
-	void readFiles(const FunctionCallbackInfo<Value> &args)
-	{
-		Isolate *isolate = args.GetIsolate();
-        Local<Array> fileNames = get_file_names(isolate);
-        args.GetReturnValue().Set(fileNames);
-	}
-
-    void writeFiles(const FunctionCallbackInfo<Value> &args)
-	{
-		if (args[0]->IsArray()) {
-            Isolate *isolate = args.GetIsolate();
-			Local<Array> array = Local<Array>::Cast(args[0]);
-			write_file_names(isolate, array);
-		}
-	}
-
-	void Init(Local<Object> exports)
-	{
-		NODE_SET_METHOD(exports, "readFiles", readFiles);
-		NODE_SET_METHOD(exports, "writeFiles", writeFiles);
-	}
-
-	NODE_MODULE(NODE_GYP_MODULE_NAME, Init)
+Napi::Array ReadFiles(const Napi::CallbackInfo& info) {
+    Napi::Env env = info.Env();
+    return GetFileNames(env);
 }
+
+void WriteFiles(const Napi::CallbackInfo& info) {
+    Napi::Env env = info.Env();
+    
+    if (info.Length() < 1 || !info[0].IsArray()) {
+        return;
+    }
+    
+    Napi::Array files = info[0].As<Napi::Array>();
+    WriteFileNames(env, files);
+}
+
+Napi::Object Init(Napi::Env env, Napi::Object exports) {
+    exports.Set("readFiles", Napi::Function::New(env, ReadFiles));
+    exports.Set("writeFiles", Napi::Function::New(env, WriteFiles));
+    return exports;
+}
+
+NODE_API_MODULE(NODE_GYP_MODULE_NAME, Init)

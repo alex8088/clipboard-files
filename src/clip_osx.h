@@ -1,19 +1,9 @@
-#include <Cocoa/Cocoa.h>
-#include <string>
-#include <node.h>
+#ifndef CLIP_OSX_H
+#define CLIP_OSX_H
 
-using namespace std;
-using v8::Context;
-using v8::Array;
-using v8::FunctionCallbackInfo;
-using v8::Isolate;
-using v8::Local;
-using v8::MaybeLocal;
-using v8::Object;
-using v8::String;
-using v8::NewStringType;
-using v8::Value;
+#include <napi.h>
 
-Local<Array> get_file_names(Isolate *isolate);
+Napi::Array GetFileNames(Napi::Env env);
+void WriteFileNames(Napi::Env env, Napi::Array files);
 
-void write_file_names(Isolate *isolate, Local<Array> fileNames);
+#endif

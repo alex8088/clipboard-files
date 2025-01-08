@@ -1,96 +1,92 @@
 #include "clip_win.h"
 
-char *GBK2Utf8(const char *strGBK)
-{
-	WCHAR *str1;
-	int n = MultiByteToWideChar(CP_ACP, 0, strGBK, -1, NULL, 0);
-	str1 = new WCHAR[n];
-	MultiByteToWideChar(CP_ACP, 0, strGBK, -1, str1, n);
-	n = WideCharToMultiByte(CP_UTF8, 0, str1, -1, NULL, 0, NULL, NULL);
-	char *str2 = new char[n];
-	WideCharToMultiByte(CP_UTF8, 0, str1, -1, str2, n, NULL, NULL);
-	delete[] str1;
-	str1 = NULL;
-	return str2;
-}
-
-Local<Array> get_file_names(Isolate *isolate)
-{
-	Local<Array> fileNames = Array::New(isolate, 0);
-	Local<Context> context = isolate->GetCurrentContext();
-	if (OpenClipboard(NULL)) // open clipboard
-	{
-		HDROP hDrop = HDROP(::GetClipboardData(CF_HDROP)); // get the file path hwnd of clipboard
-		if (hDrop != NULL)
-		{
-			char szFilePathName[MAX_PATH + 1] = { 0 };
-			UINT nNumOfFiles = DragQueryFile(hDrop, 0xFFFFFFFF, NULL, 0); // get the count of files
-			fileNames = Array::New(isolate, nNumOfFiles);
-			for (UINT nIndex = 0; nIndex < nNumOfFiles; ++nIndex)
-			{
-				memset(szFilePathName, 0, MAX_PATH + 1);
-				DragQueryFile(hDrop, nIndex, szFilePathName, MAX_PATH); // get file name
-				fileNames->Set(context, nIndex, String::NewFromUtf8(isolate, GBK2Utf8(szFilePathName), NewStringType::kNormal).ToLocalChecked());
-			}
-		}
-		CloseClipboard(); // close clipboard	
-	}
-	return fileNames;
-}
-
-std::wstring stringToWstring(const std::string& str)
-{
-    int nLen = MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, NULL, 0);
-    if (nLen == 0) 
-        return std::wstring(L"");
-
-    wchar_t* wide = new wchar_t[nLen];
-    if (!wide) 
-        return std::wstring(L"");
-
-    MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, wide, nLen);
-    std::wstring wstr(wide);
-    delete[] wide;
-    wide = NULL;
+std::wstring Utf8ToWide(const std::string& str) {
+    int count = MultiByteToWideChar(CP_UTF8, 0, str.c_str(), str.length(), NULL, 0);
+    std::wstring wstr(count, 0);
+    MultiByteToWideChar(CP_UTF8, 0, str.c_str(), str.length(), &wstr[0], count);
     return wstr;
 }
 
-void write_file_names(Isolate *isolate, Local<Array> fileNames)
-{
-	Local<Context> context = isolate->GetCurrentContext();
+std::string WideToUtf8(const std::wstring& wstr) {
+    int count = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), wstr.length(), NULL, 0, NULL, NULL);
+    std::string str(count, 0);
+    WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), wstr.length(), &str[0], count, NULL, NULL);
+    return str;
+}
 
-    std::vector<wstring> files;
-    for (size_t i = 0; i < fileNames->Length(); i++) {
-        MaybeLocal<Value> maybeIndex = fileNames->Get(context, i);
-        Local<Value> index = maybeIndex.ToLocalChecked();
-        String::Utf8Value path(isolate, index);
-        std::string pathStr(*path);
-        files.push_back(stringToWstring(pathStr));
+Napi::Array GetFileNames(Napi::Env env) {
+    Napi::Array result = Napi::Array::New(env);
+    uint32_t index = 0;
+    
+    if (OpenClipboard(NULL)) {
+        HDROP hDrop = HDROP(::GetClipboardData(CF_HDROP));
+        if (hDrop != NULL) {
+            UINT fileCount = DragQueryFile(hDrop, 0xFFFFFFFF, NULL, 0);
+            for (UINT i = 0; i < fileCount; ++i) {
+                WCHAR filePath[MAX_PATH + 1] = { 0 };
+                DragQueryFileW(hDrop, i, filePath, MAX_PATH);
+                std::string utf8Path = WideToUtf8(filePath);
+                result.Set(index++, Napi::String::New(env, utf8Path));
+            }
+        }
+        CloseClipboard();
     }
+    
+    return result;
+}
 
-    size_t bytes = sizeof(DROPFILES);
-    for (size_t i = 0; i < files.size(); ++i)
-        bytes += (files[i].length() + 1) * sizeof(wchar_t);
-    bytes += sizeof(wchar_t);
-    HANDLE hdata = ::GlobalAlloc(GMEM_MOVEABLE, bytes);
-    if (!hdata)
-       return;
-    DROPFILES* drop_files = static_cast<DROPFILES*>(::GlobalLock(hdata));
-    drop_files->pFiles = sizeof(DROPFILES);
-    drop_files->fWide = TRUE;
-    BYTE* data = reinterpret_cast<BYTE*>(drop_files) + sizeof(DROPFILES);
-    // Copy the strings stored in 'files' with proper NULL separation.
-    wchar_t* data_pos = reinterpret_cast<wchar_t*>(data);
-    for (size_t i = 0; i < files.size(); ++i) {
-        size_t offset = files[i].length() + 1;
-        memcpy(data_pos, files[i].c_str(), offset * sizeof(wchar_t));
-        data_pos += offset;
-	}
-    data_pos[0] = L'\0';  // Double NULL termination after the last string.
-    ::GlobalUnlock(hdata);
+void WriteFileNames(Napi::Env env, Napi::Array files) {
+    std::vector<std::wstring> filePaths;
+    uint32_t length = files.Length();
+    
+    for (uint32_t i = 0; i < length; i++) {
+        Napi::Value value = files[i];
+        if (value.IsString()) {
+            std::string utf8Path = value.As<Napi::String>();
+            filePaths.push_back(Utf8ToWide(utf8Path));
+        }
+    }
+    
+    if (filePaths.empty()) {
+        return;
+    }
+    
+    size_t totalSize = sizeof(DROPFILES);
+    for (const auto& path : filePaths) {
+        totalSize += (path.length() + 1) * sizeof(wchar_t);
+    }
+    totalSize += sizeof(wchar_t);
+    
+    HANDLE hGlobal = GlobalAlloc(GMEM_MOVEABLE, totalSize);
+    if (!hGlobal) {
+        return;
+    }
+    
+    DROPFILES* df = (DROPFILES*)GlobalLock(hGlobal);
+    if (!df) {
+        GlobalFree(hGlobal);
+        return;
+    }
+    
+    df->pFiles = sizeof(DROPFILES);
+    df->fWide = TRUE;
+    
+    wchar_t* fileList = (wchar_t*)(((BYTE*)df) + sizeof(DROPFILES));
+    size_t offset = 0;
+    
+    for (const auto& path : filePaths) {
+        memcpy(fileList + offset, path.c_str(), (path.length() + 1) * sizeof(wchar_t));
+        offset += path.length() + 1;
+    }
+    fileList[offset] = L'\0';
+    
+    GlobalUnlock(hGlobal);
+    
     if (OpenClipboard(NULL)) {
         EmptyClipboard();
-        SetClipboardData(CF_HDROP, hdata);
+        SetClipboardData(CF_HDROP, hGlobal);
         CloseClipboard();
-	}
+    } else {
+        GlobalFree(hGlobal);
+    }
 }
