@@ -14,9 +14,6 @@
         ],
         "conditions": [
             ['OS=="mac"', {
-                'defines': [
-                    '__MACOSX__'
-                ],
                 "sources": [
                     "src/clip_osx.mm"
                 ],
@@ -32,9 +29,6 @@
                 }
             }],
             ['OS=="win"', {
-                'defines': [
-				    '__WIN32__'
-			    ],
                 "sources": [
                     "src/clip_win.cc"
                 ],
@@ -43,6 +37,14 @@
                         "ExceptionHandling": 1
                     }
                 }
+            }],
+            ['OS=="linux"', {
+                "sources": [
+                    "src/clip_linux.cc"
+                ],
+                "libraries": [
+                    "-lX11"
+                ]
             }]
         ]
     }]

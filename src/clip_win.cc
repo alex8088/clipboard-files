@@ -1,4 +1,8 @@
-#include "clip_win.h"
+#include "clip.h"
+#include <windows.h>
+#include <shlobj.h>
+#include <vector>
+#include <string>
 
 std::wstring Utf8ToWide(const std::string& str) {
     int count = MultiByteToWideChar(CP_UTF8, 0, str.c_str(), str.length(), NULL, 0);

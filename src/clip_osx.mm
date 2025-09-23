@@ -1,5 +1,5 @@
 #import <Cocoa/Cocoa.h>
-#include "clip_osx.h"
+#include "clip.h"
 
 Napi::Array GetFileNames(Napi::Env env) {
     Napi::Array result = Napi::Array::New(env);

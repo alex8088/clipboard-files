@@ -1,5 +1,5 @@
-#ifndef CLIP_OSX_H
-#define CLIP_OSX_H
+#ifndef CLIP_FILES_H
+#define CLIP_FILES_H
 
 #include <napi.h>
 

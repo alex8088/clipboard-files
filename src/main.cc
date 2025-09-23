@@ -1,9 +1,5 @@
 #include <napi.h>
-#ifdef __WIN32__
-#include "clip_win.h"
-#elif __APPLE__
-#include "clip_osx.h"
-#endif
+#include "clip.h"
 
 Napi::Array ReadFiles(const Napi::CallbackInfo& info) {
     Napi::Env env = info.Env();

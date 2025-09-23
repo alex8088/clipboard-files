@@ -1,6 +1,6 @@
 # clipboard-files
 
-A nodejs addon, read or write file paths for clipboard, supports win32 and mac osx.
+A cross-platform Node.js native addon for reading or writing file paths to the clipboard. Supports Windows, MacOS and Linux.
 
 ## Install
 
@@ -37,6 +37,10 @@ Writes an array of file paths to the clipboard.
 
 - Windows
 - macOS
+- Linux (X11)
+  - Requires X11 development libraries
+  - Install on Ubuntu/Debian: `sudo apt-get install libx11-dev`
+  - Install on Fedora: `sudo dnf install libX11-devel`
 
 ## License
 
