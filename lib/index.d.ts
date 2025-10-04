@@ -8,6 +8,8 @@ declare module "clipboard-files" {
   /**
    * Write file paths to system clipboard
    * @param files Array of file paths to write to clipboard
+   * 
+   * @platform darwin,win32
    */
   export function writeFiles(filePaths: string[]): void;
 }
